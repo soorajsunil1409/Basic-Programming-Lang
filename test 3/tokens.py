@@ -1,0 +1,28 @@
+from enum import Enum
+
+class Tokens:
+    def __init__(self, type_, value = None, pos_start=None, pos_end=None):
+        self.type = type_
+        self.value = value
+
+        if pos_start:
+            self.pos_start = pos_start.get_pos()
+            self.pos_end = self.pos_start.get_pos()
+            self.pos_end.advance()
+
+        if pos_end:
+            self.pos_end = pos_end
+
+    def __repr__(self):
+        return f"{self.type}: {self.value}" if self.value else f"{self.type}"
+
+class TokenTypes(Enum):
+    PLUS    = "Plus"
+    MINUS   = "Minus"
+    DIVIDE  = "Divide"
+    MUL     = "Mul"
+    FLOAT   = "Float"
+    INT     = "Int"
+    LPAREN  = "LParen"
+    RPAREN  = "RParen"
+    EOF     = "EOF"

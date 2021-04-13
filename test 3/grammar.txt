@@ -1,0 +1,10 @@
+expr    :   term ((PLUS|MINUS) term)*
+
+term    :   factor ((PLUS|MINUS) factor)*
+
+factor  :   (PLUS|MINUS) power
+
+power   :   atom (POW, factor)*
+
+atom    :   FLOAT|INT
+        :   LPAREN expr RPAREN
