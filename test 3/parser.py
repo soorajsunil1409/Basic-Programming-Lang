@@ -70,24 +70,6 @@ class Parser:
         
         return self.power()
 
-    def bin_op(self, func_a, ops, func_b=None):
-        if func_b == None:
-            func_b = func_a
-
-        res = ParseResult()
-        left = res.register(func_a())
-        if res.error: return res
-
-        while self.current_tok.type in ops:
-            op_tok = self.current_tok
-            res.register_advancement()
-            self.advance()
-            right = res.register(func_b())
-            if res.error: return res
-            left = BinOpNode(left, op_tok, right)
-
-        return res.success(left)
-
     def expr(self):
         res = ParseResult()
 
@@ -117,14 +99,57 @@ class Parser:
             if res.error: return res
             return res.success(VarAssignNode(var_name, expr))
 
-        node = res.register(self.bin_op(self.term, (TokenTypes.PLUS, TokenTypes.MINUS)))
+        node = res.register(self.bin_op(self.comp_expr, ((TokenTypes.KEYWORD, "and"), (TokenTypes.KEYWORD, "or"))))
+
         if res.error:
             return res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                'Expected int, float, identifier, "VAR", "+", "-" or "("'
+                'Expected int, float, identifier, "var", "+", "-", "(" or "not"'
             ))
 
         return res.success(node)
+
+    def bin_op(self, func_a, ops, func_b=None):
+        if func_b == None:
+            func_b = func_a
+
+        res = ParseResult()
+        left = res.register(func_a())
+        if res.error: return res
+
+        while self.current_tok.type in ops or (self.current_tok.type, self.current_tok.value) in ops:
+            op_tok = self.current_tok
+            res.register_advancement()
+            self.advance()
+            right = res.register(func_b())
+            if res.error: return res
+            left = BinOpNode(left, op_tok, right)
+
+        return res.success(left)
+
+    def comp_expr(self):
+        res = ParseResult()
+
+        if self.current_tok.matches(TokenTypes.KEYWORD, "not"):
+            op_tok = self.current_tok
+            res.register_advancement()
+            self.advance()
+
+            node = res.register(self.comp_expr())
+            if res.error: return res
+            return res.success(UnaryOpNode(op_tok, node))
+
+        node = res.register(self.bin_op(self.arith_expr, (TokenTypes.EE, TokenTypes.NE, TokenTypes.LT, TokenTypes.LTE, TokenTypes.GT, TokenTypes.GTE)))
+        if res.error: 
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected int, float, identifier, "+", "-", "(", or "not"'
+            ))
+
+        return res.success(node)
+
+    def arith_expr(self):
+        return self.bin_op(self.term, (TokenTypes.PLUS, TokenTypes.MINUS))
 
     def term(self):
         return self.bin_op(self.factor, (TokenTypes.MUL, TokenTypes.DIVIDE))

@@ -21,6 +21,10 @@ class InvalidSyntaxException(Error):
     def __init__(self, pos_start, pos_end, deatils):
         super().__init__(pos_start, pos_end, "Invalid Syntax", deatils)
 
+class ExpectedCharacterException(Error):
+    def __init__(self, pos_start, pos_end, deatils):
+        super().__init__(pos_start, pos_end, "Expected Character", deatils)
+
 class RTError(Error):
     def __init__(self, pos_start, pos_end, details, context):
         super().__init__(pos_start, pos_end, "Runtime Error", details)

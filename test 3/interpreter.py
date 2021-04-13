@@ -52,6 +52,22 @@ class Interpreter:
             result, error = node_a.divided_by(node_b)
         elif node.bin_op.type == TokenTypes.POW:
             result, error = node_a.powed_by(node_b)
+        elif node.bin_op.type == TokenTypes.EE:
+            result, error = node_a.get_comparison_eq(node_b)
+        elif node.bin_op.type == TokenTypes.NE:
+            result, error = node_a.get_comparison_ne(node_b)
+        elif node.bin_op.type == TokenTypes.LT:
+            result, error = node_a.get_comparison_lt(node_b)
+        elif node.bin_op.type == TokenTypes.GT:
+        	result, error = node_a.get_comparison_gt(node_b)
+        elif node.bin_op.type == TokenTypes.LTE:
+        	result, error = node_a.get_comparison_lte(node_b)
+        elif node.bin_op.type == TokenTypes.GTE:
+        	result, error = node_a.get_comparison_gte(node_b)
+        elif node.bin_op.matches(TokenTypes.KEYWORD, 'AND'):
+        	result, error = node_a.anded_by(node_b)
+        elif node.bin_op.matches(TokenTypes.KEYWORD, 'OR'):
+        	result, error = node_a.ored_by(node_b)
 
         if error: 
             return res.failure(error)
@@ -93,6 +109,8 @@ class Interpreter:
         
         if node.op.type == TokenTypes.MINUS:
             result, error = number.multed_by(Number(-1))
+        elif node.op.matches(TokenTypes.KEYWORD, "not"):
+            result, error = number.notted()
 
         if error:
             return res.failure(error)
