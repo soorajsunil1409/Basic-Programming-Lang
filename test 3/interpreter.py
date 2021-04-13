@@ -6,6 +6,25 @@ class Context:
         self.parent = parent
         self.display_name = display_name
         self.parent_entry_pos = parent_entry_pos
+        self.symbol_table = None
+
+class Symbol_Table:
+    def __init__(self):
+        self.symbols = {}
+        self.parent = None
+
+    def get(self, name):
+        value = self.symbols.get(name, None)
+        if value == None and self.parent:
+            return self.parent.get(name)
+        return value
+
+    def set(self, name, value):
+        self.symbols[name] = value
+    
+    def remove(self, name):
+        del self.symbols[name]
+
 
 class Interpreter:
     def visit(self, node, context):
@@ -40,6 +59,30 @@ class Interpreter:
             return res.success(result.set_pos(node.pos_start, node.pos_end))
 
         return result
+
+    def visit_VarAccessNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = context.symbol_table.get(var_name)
+
+        if not value:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                f'"{var_name}" is not defined',
+                context
+            ))
+
+        value = value.copy().set_pos(node.pos_start, node.pos_end)
+        return res.success(value)
+
+    def visit_VarAssignNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = res.register(self.visit(node.value_node, context))
+        if res.error: return res
+
+        context.symbol_table.set(var_name, value)
+        return res.success(value)
 
     def visit_UnaryOpNode(self, node, context):
         res = RTResult()

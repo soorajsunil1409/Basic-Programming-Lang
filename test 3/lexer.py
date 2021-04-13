@@ -106,6 +106,11 @@ class Lexer:
             num_str += self.current_char
             self.advance()
 
+        if num_str.startswith("."):
+            num_str = "0" + num_str
+        elif num_str.endswith("."):
+            num_str += "0"
+
         return Tokens(TokenTypes.FLOAT, float(num_str), pos_start, self.pos) if "." in num_str else Tokens(TokenTypes.INT, int(num_str), pos_start, self.pos)
 
     def make_identifier(self):
