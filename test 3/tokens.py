@@ -27,6 +27,7 @@ class TokenTypes(Enum):
     DIVIDE      = "Divide"
     MUL         = "Mul"
     EQ          = "Eq"
+    POW         = "Pow"
     
     LPAREN      = "LParen"
     RPAREN      = "RParen"

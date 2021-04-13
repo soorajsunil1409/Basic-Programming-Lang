@@ -25,11 +25,16 @@ class Parser:
 
     def term(self):
         return self.bin_op(self.factor, (TokenTypes.MUL, TokenTypes.DIVIDE))
-    def factor(self):
+
+    def atom(self):
         res = ParseResult()
         tok = self.current_tok
 
-        if tok.type == TokenTypes.LPAREN:
+        if tok.type in (TokenTypes.FLOAT, TokenTypes.INT):
+            res.register(self.advance())
+            return res.success(NumberNode(tok))
+        
+        elif tok.type == TokenTypes.LPAREN:
             res.register(self.advance())
             expr = res.register(self.expr())
             if res.error: return res
@@ -42,27 +47,38 @@ class Parser:
                     "Expected \")\""
                 ))
 
-        elif tok.type in (TokenTypes.FLOAT, TokenTypes.INT):
-            res.register(self.advance())
-            return res.success(NumberNode(tok))
+        return res.failure(InvalidSyntaxException(
+            self.current_tok.pos_start, self.current_tok.pos_end,
+            'Expected int, float, "+", "-", "("'
+        ))
 
-        elif tok.type in (TokenTypes.PLUS, TokenTypes.MINUS):
+    def power(self):
+        return self.bin_op(self.atom, (TokenTypes.POW, ), self.factor)
+        
+    def factor(self):
+        res = ParseResult()
+        tok = self.current_tok
+
+        if tok.type in (TokenTypes.PLUS, TokenTypes.MINUS):
             res.register(self.advance())
             factor = res.register(self.factor())
             if res.error: return res
             return res.success(UnaryOpNode(tok, factor))
         
-        return res.failure(InvalidSyntaxException(tok.pos_start, tok.pos_end, "Expected an int or a float"))
+        return self.power()
 
-    def bin_op(self, func, ops):
+    def bin_op(self, func_a, ops, func_b=None):
+        if func_b == None:
+            func_b = func_a
+
         res = ParseResult()
-        left = res.register(func())
+        left = res.register(func_a())
         if res.error: return res
 
         while self.current_tok.type in ops:
             op_tok = self.current_tok
             res.register(self.advance())
-            right = res.register(func())
+            right = res.register(func_b())
             if res.error: return res
             left = BinOpNode(left, op_tok, right)
 

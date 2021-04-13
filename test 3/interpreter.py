@@ -31,6 +31,8 @@ class Interpreter:
             result, error = node_a.multed_by(node_b)
         elif node.bin_op.type == TokenTypes.DIVIDE:
             result, error = node_a.divided_by(node_b)
+        elif node.bin_op.type == TokenTypes.POW:
+            result, error = node_a.powed_by(node_b)
 
         if error: 
             return res.failure(error)
