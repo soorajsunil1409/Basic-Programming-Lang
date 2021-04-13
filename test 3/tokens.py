@@ -17,12 +17,17 @@ class Tokens:
         return f"{self.type}: {self.value}" if self.value else f"{self.type}"
 
 class TokenTypes(Enum):
-    PLUS    = "Plus"
-    MINUS   = "Minus"
-    DIVIDE  = "Divide"
-    MUL     = "Mul"
-    FLOAT   = "Float"
-    INT     = "Int"
-    LPAREN  = "LParen"
-    RPAREN  = "RParen"
-    EOF     = "EOF"
+    FLOAT       = "Float"
+    INT         = "Int"
+    KEYWORD     = "Keyword"
+    IDENTIFIER  = "Identifier"
+    
+    PLUS        = "Plus"
+    MINUS       = "Minus"
+    DIVIDE      = "Divide"
+    MUL         = "Mul"
+    EQ          = "Eq"
+    
+    LPAREN      = "LParen"
+    RPAREN      = "RParen"
+    EOF         = "EOF"

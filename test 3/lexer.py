@@ -1,5 +1,6 @@
 from tokens import Tokens, TokenTypes
 from exceptions import IllegalCharacterException
+from string import ascii_letters
 
 ####################################
 # POSITION CLASS
@@ -31,6 +32,11 @@ class Position:
 ####################################
 
 DIGITS = "1234567890"
+LETTERS = ascii_letters
+LETTERS_DIGITS = LETTERS + DIGITS
+KEYWORDS = [
+    "var"
+]
 
 class Lexer:
     def __init__(self, text, fn):
@@ -51,6 +57,8 @@ class Lexer:
                 self.advance()
             elif self.current_char in DIGITS + ".":
                 tokens.append(self.make_number())
+            elif self.current_char in LETTERS + "_":
+                tokens.append(self.make_identifier())
             elif self.current_char == "+":
                 tokens.append(Tokens(TokenTypes.PLUS, pos_start=self.pos))
                 self.advance()
@@ -62,6 +70,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == "*":
                 tokens.append(Tokens(TokenTypes.MUL, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == "=":
+                tokens.append(Tokens(TokenTypes.EQ, pos_start=self.pos))
                 self.advance()
             elif self.current_char == "(":
                 tokens.append(Tokens(TokenTypes.LPAREN, pos_start=self.pos))
@@ -93,3 +104,15 @@ class Lexer:
             self.advance()
 
         return Tokens(TokenTypes.FLOAT, float(num_str), pos_start, self.pos) if "." in num_str else Tokens(TokenTypes.INT, int(num_str), pos_start, self.pos)
+
+    def make_identifier(self):
+        id_str = ''
+        pos_start = self.pos.get_pos()
+
+        while self.current_char != None and self.current_char in LETTERS_DIGITS + '_':
+            id_str += self.current_char
+            self.advance()
+
+        tok_type = TokenTypes.KEYWORD if id_str in KEYWORDS else TokenTypes.IDENTIFIER
+
+        return Tokens(tok_type, id_str, pos_start, self.pos)
