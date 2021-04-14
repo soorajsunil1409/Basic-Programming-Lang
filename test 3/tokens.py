@@ -29,7 +29,12 @@ class TokenTypes(Enum):
     MINUS       = "Minus"
     DIVIDE      = "Divide"
     MUL         = "Mul"
+    MULE        = "MulE"
+    PLUSE       = "MulE"
+    MINUSE      = "MinusE"
+    DIVE        = "DivE"
     POW         = "Pow"
+    
     EQ          = "Eq"
     EE          = "Ee"
     NE          = "Ne"

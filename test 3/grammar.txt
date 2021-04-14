@@ -15,7 +15,13 @@ power           :   atom (POW, factor)*
 atom            :   FLOAT|INT|IDENTIFIER
                 :   LPAREN expr RPAREN
                 :   if-expr
+                :   for-expr
+                :   while-expr
 
 if-expr         :   KEYWORD:IF expr ARROW expr
                     (KEYWORD:ELIF expr ARROW expr)*
                     (KEYWORD:ELSE ARROW)?
+
+for-expr        :   KEYWORD:FOR IDENTIFIER EQ expr KEYWORD:TO expr (KEYWORD:STEP)? expr ARROW expr
+
+while-expr      :   KEYWORD:WHILE expr ARROW expr

@@ -15,6 +15,7 @@ def run(text):
 
     # return tokens, None
     if error: return None, error
+    if len(tokens) == 1: return None, None
 
     parser = Parser(tokens)
     ast = parser.parse()

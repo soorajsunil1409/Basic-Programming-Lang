@@ -41,7 +41,11 @@ KEYWORDS = [
     "not",
     "if",
     "elif",
-    "else"
+    "else",
+    "for",
+    "to",
+    "while",
+    "step"
 ]
 
 class Lexer:
@@ -66,19 +70,16 @@ class Lexer:
             elif self.current_char in LETTERS + "_":
                 tokens.append(self.make_identifier())
             elif self.current_char == "+":
-                tokens.append(Tokens(TokenTypes.PLUS, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_plus())
             elif self.current_char == "-":
                 tokens.append(self.make_arrow_minus())
             elif self.current_char == "/":
-                tokens.append(Tokens(TokenTypes.DIVIDE, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_div())
             elif self.current_char == "^":
                 tokens.append(Tokens(TokenTypes.POW, pos_start=self.pos))
                 self.advance()
             elif self.current_char == "*":
-                tokens.append(Tokens(TokenTypes.MUL, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_mul())
             elif self.current_char == "(":
                 tokens.append(Tokens(TokenTypes.LPAREN, pos_start=self.pos))
                 self.advance()
@@ -106,6 +107,39 @@ class Lexer:
         tokens.append(Tokens(TokenTypes.EOF, pos_start=self.pos))
         return tokens, None
 
+    def make_plus(self):
+        tok_type = TokenTypes.PLUS
+        pos_start = self.pos.get_pos()
+        self.advance()
+
+        if self.current_char == "=":
+            self.advance()
+            tok_type = TokenTypes.PLUSE
+
+        return Tokens(tok_type, pos_start=pos_start, pos_end=self.pos)
+
+    def make_mul(self):
+        tok_type = TokenTypes.MUL
+        pos_start = self.pos.get_pos()
+        self.advance()
+
+        if self.current_char == "=":
+            self.advance()
+            tok_type = TokenTypes.MULE
+
+        return Tokens(tok_type, pos_start=pos_start, pos_end=self.pos)
+
+    def make_div(self):
+        tok_type = TokenTypes.DIVIDE
+        pos_start = self.pos.get_pos()
+        self.advance()
+
+        if self.current_char == "=":
+            self.advance()
+            tok_type = TokenTypes.DIVE
+
+        return Tokens(tok_type, pos_start=pos_start, pos_end=self.pos)
+
     def make_arrow_minus(self):
         tok_type = TokenTypes.MINUS
         pos_start = self.pos.get_pos()
@@ -124,6 +158,9 @@ class Lexer:
         if self.current_char == "=":
             self.advance()
             return Tokens(TokenTypes.NE, pos_start=pos_start, pos_end=self.pos), None
+        elif self.current_char == "=":
+            self.advance()
+            tok_type = TokenTypes.MINUSE
         
         self.advance()
         return None, ExpectedCharacterException(
