@@ -17,7 +17,10 @@ class Parser:
     def parse(self):
         res = self.expr()
         if not res.error and self.current_tok.type != TokenTypes.EOF:
-            return res.failure(InvalidSyntaxException(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected "+", "-", "*" or "/"'))
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end, 
+                'Expected "+", "-", "*", "==", "^", ">=", ">", "<=", "<", "and", "or", "not" or "/"'
+                ))
         return res
 
     def atom(self):
@@ -49,10 +52,77 @@ class Parser:
                     "Expected \")\""
                 ))
 
+        elif tok.matches(TokenTypes.KEYWORD, "if"):
+            if_expr = res.register(self.if_expr())
+            if res.error: return res
+            return res.success(if_expr)
+
         return res.failure(InvalidSyntaxException(
             self.current_tok.pos_start, self.current_tok.pos_end,
             'Expected int, float, identifier, "+", "-", "("'
         ))
+
+    def if_expr(self):
+        res = ParseResult()
+        cases = []
+        else_case = None
+
+        if not self.current_tok.matches(TokenTypes.KEYWORD, "if"):
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected "if"'
+            ))
+
+        res.register_advancement()
+        self.advance()
+
+        condition = res.register(self.expr())
+        if res.error: return res
+
+        if self.current_tok.type != TokenTypes.ARROW:
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected "->"'
+            ))
+        
+        res.register_advancement()
+        self.advance()
+
+        expr = res.register(self.expr())
+        if res.error: return res
+
+        cases.append((condition, expr))
+
+        while self.current_tok.matches(TokenTypes.KEYWORD, "elif"):
+            res.register_advancement()
+            self.advance()
+
+            condition = res.register(self.expr())
+            if res.error: return res
+
+            if self.current_tok.type != TokenTypes.ARROW:
+                return res.failure(InvalidSyntaxException(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    'Expected "->"'
+                ))
+            
+            res.register_advancement()
+            self.advance()
+
+            expr = res.register(self.expr())
+            if res.error: return res
+
+            cases.append((condition, expr))
+
+        if self.current_tok.matches(TokenTypes.KEYWORD, "else"):
+            res.register_advancement()
+            self.advance()
+
+            else_case = res.register(self.expr())
+            if res.error: return res
+
+        return res.success(IfNode(cases, else_case))
+
 
     def power(self):
         return self.bin_op(self.atom, (TokenTypes.POW, ), self.factor)

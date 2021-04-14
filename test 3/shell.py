@@ -36,4 +36,4 @@ while True:
     text = input(">>> ")
     result, error = run(text)
     if error: print(error)
-    else: print(result)
+    elif result: print(result)

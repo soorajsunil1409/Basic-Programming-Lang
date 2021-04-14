@@ -80,3 +80,6 @@ class Number:
         copy.set_pos(self.pos_start, self.pos_end)
         self.set_context(self.context)
         return copy
+
+    def is_true(self):
+        return self.value != 0

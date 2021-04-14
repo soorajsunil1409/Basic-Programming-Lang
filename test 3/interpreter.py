@@ -64,9 +64,9 @@ class Interpreter:
         	result, error = node_a.get_comparison_lte(node_b)
         elif node.bin_op.type == TokenTypes.GTE:
         	result, error = node_a.get_comparison_gte(node_b)
-        elif node.bin_op.matches(TokenTypes.KEYWORD, 'AND'):
+        elif node.bin_op.matches(TokenTypes.KEYWORD, 'and'):
         	result, error = node_a.anded_by(node_b)
-        elif node.bin_op.matches(TokenTypes.KEYWORD, 'OR'):
+        elif node.bin_op.matches(TokenTypes.KEYWORD, 'or'):
         	result, error = node_a.ored_by(node_b)
 
         if error: 
@@ -116,6 +116,25 @@ class Interpreter:
             return res.failure(error)
         else:
             return res.success(result.set_pos(node.pos_start, node.pos_end))
+
+    def visit_IfNode(self, node, context):
+        res = RTResult()
+
+        for condition, expr in node.cases:
+            condition_value = res.register(self.visit(condition, context))
+            if res.error: return res.error
+
+            if condition_value.is_true():
+                expr_value = res.register(self.visit(expr, context))
+                if res.error: return res
+                return res.success(expr_value)
+
+        if node.else_case:
+            else_value = res.register(self.visit(node.else_case, context))
+            if res.error: return res
+            return res.success(else_value)
+
+        return res.success(None)
 
 class RTResult:
     def __init__(self):

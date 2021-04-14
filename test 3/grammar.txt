@@ -14,3 +14,8 @@ power           :   atom (POW, factor)*
 
 atom            :   FLOAT|INT|IDENTIFIER
                 :   LPAREN expr RPAREN
+                :   if-expr
+
+if-expr         :   KEYWORD:IF expr ARROW expr
+                    (KEYWORD:ELIF expr ARROW expr)*
+                    (KEYWORD:ELSE ARROW)?

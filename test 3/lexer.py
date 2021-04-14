@@ -38,7 +38,10 @@ KEYWORDS = [
     "var",
     "and",
     "or",
-    "not"
+    "not",
+    "if",
+    "elif",
+    "else"
 ]
 
 class Lexer:
@@ -66,8 +69,7 @@ class Lexer:
                 tokens.append(Tokens(TokenTypes.PLUS, pos_start=self.pos))
                 self.advance()
             elif self.current_char == "-":
-                tokens.append(Tokens(TokenTypes.MINUS, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_arrow_minus())
             elif self.current_char == "/":
                 tokens.append(Tokens(TokenTypes.DIVIDE, pos_start=self.pos))
                 self.advance()
@@ -103,6 +105,17 @@ class Lexer:
 
         tokens.append(Tokens(TokenTypes.EOF, pos_start=self.pos))
         return tokens, None
+
+    def make_arrow_minus(self):
+        tok_type = TokenTypes.MINUS
+        pos_start = self.pos.get_pos()
+        self.advance()
+
+        if self.current_char == ">":
+            self.advance()
+            tok_type = TokenTypes.ARROW
+
+        return Tokens(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def make_not_equals(self):
         pos_start = self.pos.get_pos()
