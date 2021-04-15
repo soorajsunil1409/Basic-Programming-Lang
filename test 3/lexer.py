@@ -90,6 +90,9 @@ class Lexer:
                 token, error = self.make_not_equals()
                 if error: return [], error
                 tokens.append(token)
+            elif self.current_char == "|":
+                tokens.append(Tokens(TokenTypes.PIPE, pos_start=self.pos))
+                self.advance()
             elif self.current_char == "=":
                 token = self.make_equals()
                 tokens.append(token)

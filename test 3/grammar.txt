@@ -22,6 +22,7 @@ if-expr         :   KEYWORD:IF expr ARROW expr
                     (KEYWORD:ELIF expr ARROW expr)*
                     (KEYWORD:ELSE ARROW)?
 
-for-expr        :   KEYWORD:FOR IDENTIFIER EQ expr KEYWORD:TO expr (KEYWORD:STEP)? expr ARROW expr
+for-expr        :   KEYWORD:FOR IDENTIFIER LPAREN expr KEYWORD:TO expr RPAREN (KEYWORD:STEP expr)? PIPE expr PIPE
+                :   for i(1 to 6) step 1 | var res = res + 1 |
 
 while-expr      :   KEYWORD:WHILE expr ARROW expr

@@ -95,10 +95,10 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        if self.current_tok.type != TokenTypes.EQ:
+        if self.current_tok.type != TokenTypes.LPAREN:
             return res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected \"=\""
+                "Expected \"(\""
             ))
 
         res.register_advancement()
@@ -119,6 +119,15 @@ class Parser:
         end_value = res.register(self.expr())
         if res.error: return res
 
+        if self.current_tok.type != TokenTypes.RPAREN:
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected \")\""
+            ))
+
+        res.register_advancement()
+        self.advance()
+
         if self.current_tok.matches(TokenTypes.KEYWORD, "step"):
             res.register_advancement()
             self.advance()
@@ -128,11 +137,17 @@ class Parser:
         else:
             step_value = None
 
-        if self.current_tok.type != TokenTypes.ARROW:
-            return res.failure(InvalidSyntaxException(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected \"->\""
-            ))
+        if self.current_tok.type != TokenTypes.PIPE:
+            if step_value:
+                return res.failure(InvalidSyntaxException(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected \"|\""
+                ))
+            else:
+                return res.failure(InvalidSyntaxException(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected \"|\" or \"step\""
+                ))
 
         res.register_advancement()
         self.advance()
@@ -157,10 +172,10 @@ class Parser:
         condition = res.register(self.expr())
         if res.error: return res
 
-        if self.current_tok.type != TokenTypes.ARROW:
+        if self.current_tok.type != TokenTypes.PIPE:
             res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                'Expected "->"'
+                'Expected "|"'
             ))
 
         res.register_advancement()
@@ -170,7 +185,6 @@ class Parser:
         if res.error: return res
 
         return res.success(WhileNode(condition, body))
-
 
     def if_expr(self):
         res = ParseResult()

@@ -48,3 +48,4 @@ class TokenTypes(Enum):
     EOF         = "EOF"
 
     ARROW       = "Arrow"
+    PIPE        = "Pipe"
