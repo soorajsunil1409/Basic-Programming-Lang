@@ -155,13 +155,22 @@ class Parser:
         body = res.register(self.expr())
         if res.error: return res
 
-        return res.success(ForNode(var_name, start_value, end_value, start_value, body))
+        if self.current_tok.type != TokenTypes.PIPE:
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected "|"'
+            ))
+
+        res.register_advancement()
+        self.advance()
+
+        return res.success(ForNode(var_name, start_value, end_value, step_value, body))
 
     def while_expr(self):
         res = ParseResult()
 
         if not self.current_tok.matches(TokenTypes.KEYWORD, "while"):
-            res.failure(InvalidSyntaxException(
+            return res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 'Expected "while"'
             ))
@@ -173,7 +182,7 @@ class Parser:
         if res.error: return res
 
         if self.current_tok.type != TokenTypes.PIPE:
-            res.failure(InvalidSyntaxException(
+            return res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 'Expected "|"'
             ))
@@ -183,6 +192,15 @@ class Parser:
 
         body = res.register(self.expr())
         if res.error: return res
+
+        if self.current_tok.type != TokenTypes.PIPE:
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected "|"'
+            ))
+
+        res.register_advancement()
+        self.advance()
 
         return res.success(WhileNode(condition, body))
 

@@ -153,14 +153,21 @@ class Interpreter:
 
         i = start_value.value
 
-        if start_value.value >= 0:
+        # if start_value.value >= 0:
+        if end_value.value > i:
             condition = lambda: i < end_value.value
+            print(condition(), 1)
         else:
             condition = lambda: i > end_value.value
+            print(condition(), 2)
+        # else:
+        #     condition = lambda: i > end_value.value
+        #     print(condition(), 2)
 
         while condition():
             context.symbol_table.set(node.var_name_tok.value, Number(i))
             i += step_value.value
+            print(i)
 
             res.register(self.visit(node.body_node, context))
             if res.error: return res
