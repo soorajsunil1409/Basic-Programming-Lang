@@ -157,9 +157,11 @@ class Interpreter:
         if end_value.value > i:
             condition = lambda: i < end_value.value
             print(condition(), 1)
-        else:
+        elif end_value.value < i:
             condition = lambda: i > end_value.value
             print(condition(), 2)
+        else:
+            condition = lambda: i == end_value.value
         # else:
         #     condition = lambda: i > end_value.value
         #     print(condition(), 2)
@@ -167,7 +169,6 @@ class Interpreter:
         while condition():
             context.symbol_table.set(node.var_name_tok.value, Number(i))
             i += step_value.value
-            print(i)
 
             res.register(self.visit(node.body_node, context))
             if res.error: return res
