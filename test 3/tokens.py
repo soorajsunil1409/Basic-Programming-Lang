@@ -49,3 +49,4 @@ class TokenTypes(Enum):
 
     ARROW       = "Arrow"
     PIPE        = "Pipe"
+    COMMA       = "Comma"

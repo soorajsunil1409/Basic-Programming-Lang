@@ -156,10 +156,8 @@ class Interpreter:
         # if start_value.value >= 0:
         if end_value.value > i:
             condition = lambda: i < end_value.value
-            print(condition(), 1)
         elif end_value.value < i:
             condition = lambda: i > end_value.value
-            print(condition(), 2)
         else:
             condition = lambda: i == end_value.value
         # else:

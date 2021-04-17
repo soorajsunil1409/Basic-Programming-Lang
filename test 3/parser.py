@@ -107,10 +107,10 @@ class Parser:
         start_value = res.register(self.expr())
         if res.error: return res
 
-        if not self.current_tok.matches(TokenTypes.KEYWORD, "to"):
+        if self.current_tok.type != TokenTypes.COMMA:
             return res.failure(InvalidSyntaxException(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected \"to\""
+                "Expected \",\""
             ))
         
         res.register_advancement()
@@ -118,6 +118,15 @@ class Parser:
 
         end_value = res.register(self.expr())
         if res.error: return res
+
+        if self.current_tok.type == TokenTypes.COMMA:
+            res.register_advancement()
+            self.advance()
+
+            step_value = res.register(self.expr())
+            if res.error: return res
+        else:
+            step_value = None
 
         if self.current_tok.type != TokenTypes.RPAREN:
             return res.failure(InvalidSyntaxException(
@@ -127,15 +136,6 @@ class Parser:
 
         res.register_advancement()
         self.advance()
-
-        if self.current_tok.matches(TokenTypes.KEYWORD, "step"):
-            res.register_advancement()
-            self.advance()
-
-            step_value = res.register(self.expr())
-            if res.error: return res
-        else:
-            step_value = None
 
         if self.current_tok.type != TokenTypes.PIPE:
             if step_value:
