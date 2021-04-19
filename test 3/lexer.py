@@ -45,7 +45,8 @@ KEYWORDS = [
     "for",
     "to",
     "while",
-    "step"
+    "step",
+    "def"
 ]
 
 class Lexer:
@@ -89,6 +90,9 @@ class Lexer:
             elif self.current_char == ",":
                 tokens.append(Tokens(TokenTypes.COMMA, pos_start=self.pos))
                 self.advance()
+            elif self.current_char == "$":
+                tokens.append(Tokens(TokenTypes.DOLLAR, pos_start=self.pos))
+                self.advance()
             elif self.current_char == "!":
                 token, error = self.make_not_equals()
                 if error: return [], error
@@ -96,6 +100,8 @@ class Lexer:
             elif self.current_char == "|":
                 tokens.append(Tokens(TokenTypes.PIPE, pos_start=self.pos))
                 self.advance()
+            elif self.current_char == "\"":
+                self.make_string()
             elif self.current_char == "=":
                 token = self.make_equals()
                 tokens.append(token)

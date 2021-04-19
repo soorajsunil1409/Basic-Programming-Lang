@@ -1,7 +1,6 @@
 from lexer import Lexer
 from parser import Parser
 from nodes import *
-from values import *
 from interpreter import *
 
 global_symbol_table = Symbol_Table()
@@ -28,9 +27,7 @@ def run(text):
     context.symbol_table = global_symbol_table
     result = interpreter.visit(ast.node, context)
 
-    if result.error: return None, result.error
-
-    return result.value, None
+    return result.value, result.error
 
 
 while True:

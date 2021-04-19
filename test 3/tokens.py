@@ -40,8 +40,8 @@ class TokenTypes(Enum):
     NE          = "Ne"
     GT          = "Gt"
     LT          = "Lt"
-    GTE          = "Gte"
-    LTE          = "Lte"
+    GTE         = "Gte"
+    LTE         = "Lte"
     
     LPAREN      = "LParen"
     RPAREN      = "RParen"
@@ -50,3 +50,4 @@ class TokenTypes(Enum):
     ARROW       = "Arrow"
     PIPE        = "Pipe"
     COMMA       = "Comma"
+    DOLLAR      = "Dollar"

@@ -1,4 +1,4 @@
-expr            :   KEYWORD:VAR IDENTIFIER (EQ|MULE|PLUSE|DIVE|MINUSE) expr
+expr            :   DOLLAR IDENTIFIER (EQ|MULE|PLUSE|DIVE|MINUSE) expr
                 :   comp-expr ((KEYWORD:AND|KEYWORD:OR) comp-expr)*
 
 comp-expr       :   NOT comp-expr
@@ -10,19 +10,27 @@ term            :   factor ((PLUS|MINUS) factor)*
 
 factor          :   (PLUS|MINUS) power
 
-power           :   atom (POW, factor)*
+power           :   call (POW, factor)*
+
+call            :   atom (LPAREN (COMMA expr)*)? RPAREN)?
 
 atom            :   FLOAT|INT|IDENTIFIER
                 :   LPAREN expr RPAREN
                 :   if-expr
                 :   for-expr
                 :   while-expr
+                :   func-def
 
 if-expr         :   KEYWORD:IF expr ARROW expr
                     (KEYWORD:ELIF expr ARROW expr)*
                     (KEYWORD:ELSE ARROW)?
 
-for-expr        :   KEYWORD:FOR IDENTIFIER LPAREN expr KEYWORD:TO expr RPAREN (KEYWORD:STEP expr)? PIPE expr PIPE
-                :   for i(1 to 6) step 1 | var res =  res + 1 |
+for-expr        :   KEYWORD:FOR IDENTIFIER LPAREN expr COMMA expr (COMMA expr)? RPAREN PIPE expr PIPE
+                :   for i(1, 6, 1) | var res = res + 1 |
 
 while-expr      :   KEYWORD:WHILE expr ARROW expr
+                :   while TRUE | var res = res + 2 |
+
+func-def       :   KEYWORD:FUNC IDENTIFIER?
+                   LPAREN (KEYWORD:IDENTIFIER (COMMA KEYWORD:IDENTIFIER)*)? RPAREN 
+                   ARROW expr
