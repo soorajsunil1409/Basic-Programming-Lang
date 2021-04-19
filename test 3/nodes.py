@@ -8,6 +8,26 @@ class NumberNode:
     def __repr__(self):
         return f"{self.node}"
 
+class StringNode:
+    def __init__(self, value):
+        self.value = value
+
+        self.pos_start = value.pos_start
+        self.pos_end = value.pos_end
+
+    def __repr__(self):
+        return f"{self.value}"
+
+class ListNode:
+    def __init__(self, values):
+        self.values = values
+
+        self.pos_start = values[0].pos_start
+        self.pos_end = values[-1].pos_end
+
+    def __repr__(self):
+        return f"{self.values}"
+
 class VarAccessNode:
     def __init__(self, var_name_tok):
         self.var_name_tok = var_name_tok
