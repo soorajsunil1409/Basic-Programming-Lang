@@ -18,6 +18,16 @@ class StringNode:
     def __repr__(self):
         return f"{self.value}"
 
+class BooleanNode:
+    def __init__(self, value):
+        self.value = value
+
+        self.pos_start = value.pos_start
+        self.pos_end = value.pos_end
+
+    def __repr__(self):
+        return f"{self.value}"
+
 class ListNode:
     def __init__(self, values):
         self.values = values

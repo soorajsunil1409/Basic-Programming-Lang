@@ -49,7 +49,10 @@ KEYWORDS = [
     "def"
 ]
 
+KEYWORDS_EXT = KEYWORDS + ["true", "false"]
+
 class Lexer:
+    prev_char = ""
     def __init__(self, text, fn):
         self.text = text
         self.current_char = None
@@ -69,7 +72,9 @@ class Lexer:
             elif self.current_char in DIGITS + ".":
                 tokens.append(self.make_number())
             elif self.current_char in LETTERS + "_":
-                tokens.append(self.make_identifier())
+                token, error = self.make_identifier()
+                if error: return [], error
+                tokens.append(token)
             elif self.current_char == "+":
                 tokens.append(self.make_plus())
             elif self.current_char == "-":
@@ -99,6 +104,7 @@ class Lexer:
             elif self.current_char == "$":
                 tokens.append(Tokens(TokenTypes.DOLLAR, pos_start=self.pos))
                 self.advance()
+                self.prev_char = "$"
             elif self.current_char == "!":
                 token, error = self.make_not_equals()
                 if error: return [], error
@@ -269,6 +275,8 @@ class Lexer:
         elif num_str.endswith("."):
             num_str += "0"
 
+        prev_char = "num"
+
         return Tokens(TokenTypes.FLOAT, float(num_str), pos_start, self.pos) if "." in num_str else Tokens(TokenTypes.INT, int(num_str), pos_start, self.pos)
 
     def make_identifier(self):
@@ -279,6 +287,18 @@ class Lexer:
             id_str += self.current_char
             self.advance()
 
-        tok_type = TokenTypes.KEYWORD if id_str in KEYWORDS else TokenTypes.IDENTIFIER
+        if id_str in KEYWORDS_EXT:
+            tok_type = TokenTypes.KEYWORD
+            if self.prev_char == "$":
+                return None, InvalidSyntaxException(
+                    pos_start, self.pos,
+                    "Keywords cannot be used as variables"
+                )
+                
+            if id_str in ("true", "false"):
+                tok_type = TokenTypes.BOOLEAN
+        else:
+            tok_type = TokenTypes.IDENTIFIER
 
-        return Tokens(tok_type, id_str, pos_start, self.pos)
+        self.prev_char = ""
+        return Tokens(tok_type, id_str, pos_start, self.pos), None

@@ -1,6 +1,7 @@
 from tokens import TokenTypes
 from exceptions import InvalidSyntaxException
 from nodes import *
+from lexer import KEYWORDS_EXT
 
 class Parser:
     def __init__(self, tokens):
@@ -37,6 +38,11 @@ class Parser:
                 ))
 
             var_name = self.current_tok
+            if var_name in KEYWORDS_EXT:
+                return res.failure(InvalidSyntaxException(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    f"{var_name} is a reserved keyword"
+                ))
             res.register_advancement()
             self.advance()
 
@@ -157,6 +163,11 @@ class Parser:
             res.register_advancement()
             self.advance()
             return res.success(StringNode(tok))
+
+        elif tok.type == TokenTypes.BOOLEAN:
+            res.register_advancement()
+            self.advance()
+            return res.success(BooleanNode(tok))
 
         elif tok.type == TokenTypes.IDENTIFIER:
             res.register_advancement()

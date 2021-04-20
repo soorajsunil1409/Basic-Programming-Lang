@@ -25,6 +25,7 @@ class TokenTypes(Enum):
     KEYWORD     = "Keyword"
     IDENTIFIER  = "Identifier"
     STRING      = "String"
+    BOOLEAN     = "Boolean"
     
     PLUS        = "Plus"
     MINUS       = "Minus"
