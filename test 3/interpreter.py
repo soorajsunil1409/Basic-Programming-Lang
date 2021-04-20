@@ -66,11 +66,11 @@ class Value:
     def is_true(self):
         return False
 
-    def illegal_operation(self, other=None):
+    def illegal_operation(self, other=None, message=f'Illegal operation'):
         if not other: other = self
         return RTError(
             self.pos_start, other.pos_end,
-            f'Illegal operation',
+            message,
             self.context
         )
 
@@ -148,22 +148,10 @@ class Number(Value):
             return None, Value.illegal_operation(self, other)
 
     def anded_by(self, other):
-        if isinstance(other, Number):
-            return Boolean("true" if (self.value and other.value) else "false").set_context(self.context), None
-        elif isinstance(other, Boolean):
-            second = other.value.capitalize()
-            return Boolean(str(self.is_true() and eval(second)).lower()), None
-        else:
-            return None, Value.illegal_operation(self, other)
+        return Boolean(str(self.is_true() and other.is_true()).lower()), None
 
     def ored_by(self, other):
-        if isinstance(other, Number):
-            return Boolean("true" if (self.value or other.value) else "false").set_context(self.context), None
-        elif isinstance(other, Boolean):
-            second = other.value.capitalize()
-            return Boolean(str(self.is_true() or eval(second)).lower()), None
-        else:
-            return None, Value.illegal_operation(self, other)
+        return Boolean(str(self.is_true() or other.is_true()).lower()), None
 
     def copy(self):
         copy = Number(self.value)
@@ -257,6 +245,68 @@ class String(Value):
     def __repr__(self):
         return f"{self.value}"
 
+class List(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def added_to(self, other):
+        new_list = self.copy()
+        new_list.value.append(other.value)
+        return new_list, None
+
+    def multed_by(self, other):
+        if isinstance(other, List):
+            new_list = self.copy()
+
+            new_list.value.extend(other.value)
+            return new_list, None
+        else:
+            return None, Value.illegal_operation(other, message=f'Expected List type, instead got a {type(other).__name__} type')
+        
+    def subbed_by(self, other):
+        if isinstance(other, Number):
+            new_list = self.copy()
+            try:
+                new_list.value.pop(other.value)
+                return new_list, None
+            except:
+                return None, RTError(
+                other.pos_start, other.pos_end,
+                'List index out of bounds',
+                self.context
+                )
+        else:
+            return None, Value.illegal_operation(other, message=f'Expected Number type, instead got a {type(other).__name__} type')
+
+    def divided_by(self, other, context):
+        if isinstance(other, Number):
+            try:
+                return self.value[other.value], None
+            except:
+                return None, RTError(
+                other.pos_start, other.pos_end,
+                'List index out of bounds',
+                self.context
+                )
+        else:
+            return None, Value.illegal_operation(other, message=f'Expected Number type, instead got a {type(other).__name__} type')
+
+    def is_true(self):
+        return self.value
+
+    def copy(self):
+        copy = List(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        self.set_context(self.context)
+        return copy
+
+    def __str__(self):
+        return ", ".join([f"{x}" for x in self.value])
+
+    def __repr__(self):
+        return f'[{", ".join([repr(x) for x in self.value])}]'
+
 class Boolean(Value):
     def __init__(self, value):
         super().__init__()
@@ -295,9 +345,52 @@ class Boolean(Value):
     def __repr__(self):
         return f"{self.value}"
 
-class Function(Value):
-    def __init__(self, name, body_node, arg_names):
+class BaseFunction(Value):
+    def __init__(self, name):
         super().__init__()
+        self.name = name or "<anonymous>"
+
+    def generate_new_context(self):
+        new_context = Context(self.name, self.context, self.pos_start)
+        new_context.symbol_table = Symbol_Table(new_context.parent.symbol_table)
+        return new_context
+
+    def check_args(self, arg_names, args):
+        res = RTResult()
+
+        if len(args) > len(arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f"{len(args) - len(arg_names)} too many args passed into {self}",
+                self.context
+            ))
+
+        if len(args) < len(arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f"{len(arg_names) - len(args)} too few args passed into {self}",
+                self.context
+            ))
+        
+        return res.success(None)
+
+    def populate_args(self, arg_names, args, exec_ctx):
+        for i in range(len(args)):
+            arg_name = self.arg_names[i]
+            arg_value = args[i]
+            arg_value.set_context(exec_ctx)
+            exec_ctx.symbol_table.set(arg_name, arg_value)        
+
+    def check_and_populate_args(self, arg_names, args, exec_ctx):
+        res = RTResult()
+        res.register(self.check_args(arg_names, args))
+        if res.error: return res
+        self.populate_args(arg_names, args, exec_ctx)
+        return res.success(None)
+
+class Function(BaseFunction):
+    def __init__(self, name, body_node, arg_names):
+        super().__init__(name)
         self.name = name or "<anonymous>"
         self.body_node = body_node
         self.arg_names = arg_names
@@ -305,30 +398,12 @@ class Function(Value):
     def execute(self, args):
         res = RTResult()
         interpreter = Interpreter()
-        new_context = Context(self.name, self.context, self.pos_start)
-        new_context.symbol_table = Symbol_Table(new_context.parent.symbol_table)
+        exec_ctx = self.generate_new_context()
 
-        if len(args) > len(self.arg_names):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{len(args) - len(self.arg_names)} too many args passed into {self.name}",
-                new_context
-            ))
+        res.register(self.check_and_populate_args(self.arg_names, args, exec_ctx))
+        if res.error: return res
 
-        if len(args) < len(self.arg_names):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{len(self.arg_names) - len(args)} too few args passed into {self.name}",
-                new_context
-            ))
-
-        for i in range(len(args)):
-            arg_name = self.arg_names[i]
-            arg_value = args[i]
-            arg_value.set_context(new_context)
-            new_context.symbol_table.set(arg_name, arg_value)
-
-        value = res.register(interpreter.visit(self.body_node, new_context))
+        value = res.register(interpreter.visit(self.body_node, exec_ctx))
         if res.error: return res
         return res.success(value)
 
@@ -391,6 +466,17 @@ class Interpreter:
     def visit_StringNode(self, node, context):
         return RTResult().success(
             String(node.value.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+
+    def visit_ListNode(self, node, context):
+        res = RTResult()
+        elements = []
+
+        for elem in node.values:
+            elements.append(res.register(self.visit(elem, context)))
+        
+        return res.success(
+            List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
     def visit_NumberNode(self, node, context):

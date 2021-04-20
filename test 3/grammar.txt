@@ -20,6 +20,9 @@ atom            :   FLOAT|INT|STRING|IDENTIFIER
                 :   for-expr
                 :   while-expr
                 :   func-def
+                :   list-expr
+
+list-expr       :   LSQUARE (expr (COMMA expr)*)? RSQUARE
 
 if-expr         :   KEYWORD:IF expr ARROW expr
                     (KEYWORD:ELIF expr ARROW expr)*

@@ -32,4 +32,4 @@ while True:
     text = input(">>> ")
     result, error = run(text)
     if error: print(error)
-    elif result: print(result)
+    elif result: print(repr(result))

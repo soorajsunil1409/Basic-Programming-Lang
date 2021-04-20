@@ -188,6 +188,11 @@ class Parser:
                     self.current_tok.pos_start, self.current_tok.pos_end,
                     "Expected \")\""
                 ))
+        
+        elif tok.type == TokenTypes.LSQUARE:
+            list_exp = res.register(self.list_expr())
+            if res.error: return res
+            return res.success(list_exp)
 
         elif tok.matches(TokenTypes.KEYWORD, "if"):
             if_expr = res.register(self.if_expr())
@@ -213,6 +218,49 @@ class Parser:
             self.current_tok.pos_start, self.current_tok.pos_end,
             'Expected int, float, identifier, "+", "-", "(", if, for, while, def'
         ))
+
+    def list_expr(self):
+        res = ParseResult()
+        elements = []
+        pos_start = self.current_tok.pos_start.get_pos()
+
+        if self.current_tok.type != TokenTypes.LSQUARE:
+            return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                'Expected "["'
+            ))
+        
+        res.register_advancement()
+        self.advance()
+
+        if self.current_tok.type == TokenTypes.RSQUARE:
+            res.register_advancement()
+            self.advance()
+        else:
+            elements.append(res.register(self.expr()))
+            if res.error:
+                return res.failure(InvalidSyntaxException(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ']', '$', 'if', 'for', 'while', 'def', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                ))
+            
+            while self.current_tok.type == TokenTypes.COMMA:
+                res.register_advancement()
+                self.advance()
+
+                elements.append(res.register(self.expr()))
+                if res.error: return res
+
+            if self.current_tok.type != TokenTypes.RSQUARE:
+                return res.failure(InvalidSyntaxException(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    'Expected "]"'
+                ))
+            
+            res.register_advancement()
+            self.advance()
+
+        return res.success(ListNode(elements, pos_start, self.current_tok.pos_end.get_pos()))
 
     def func_def(self):
         res = ParseResult()

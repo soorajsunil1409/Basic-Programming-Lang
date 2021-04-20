@@ -29,11 +29,11 @@ class BooleanNode:
         return f"{self.value}"
 
 class ListNode:
-    def __init__(self, values):
+    def __init__(self, values, pos_start, pos_end):
         self.values = values
 
-        self.pos_start = values[0].pos_start
-        self.pos_end = values[-1].pos_end
+        self.pos_start = pos_start
+        self.pos_end = pos_end
 
     def __repr__(self):
         return f"{self.values}"

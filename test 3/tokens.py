@@ -47,6 +47,8 @@ class TokenTypes(Enum):
     
     LPAREN      = "LParen"
     RPAREN      = "RParen"
+    LSQUARE     = "LSquare"
+    RSQUARE     = "RSquare"
     EOF         = "EOF"
 
     ARROW       = "Arrow"
