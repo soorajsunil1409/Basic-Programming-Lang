@@ -1,5 +1,6 @@
 from tokens import TokenTypes
 from exceptions import *
+import os
 
 class Value:
     def __init__(self):
@@ -164,6 +165,16 @@ class Number(Value):
 
     def __repr__(self):
         return f"{self.value}"
+
+class Int(Number):
+    def __init__(self, value):
+        super().__init__(value)
+
+class Float(Number):
+    def __init__(self, value):
+        super().__init__(value)
+
+Number.null = Number(0)
 
 class String(Value):
     def __init__(self, value):
@@ -376,7 +387,7 @@ class BaseFunction(Value):
 
     def populate_args(self, arg_names, args, exec_ctx):
         for i in range(len(args)):
-            arg_name = self.arg_names[i]
+            arg_name = arg_names[i]
             arg_value = args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)        
@@ -415,6 +426,131 @@ class Function(BaseFunction):
 
     def __repr__(self):
         return f"<function {self.name}>"
+
+class BuiltInFunction(BaseFunction):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def execute(self, args):
+        res = RTResult()
+        exec_ctx = self.generate_new_context()
+
+        method_name = f"execute_{self.name}"
+        method = getattr(self, method_name, self.no_visit_method)
+
+        res.register(self.check_and_populate_args(method.arg_names, args, exec_ctx))
+        if res.error: return res
+
+        return_value = res.register(method(exec_ctx))
+        if res.error: return res
+
+        return res.success(return_value)
+
+    def no_visit_method(self):
+        raise Exception(f'No execute_{self.name} method defined')
+
+    def copy(self):
+        copy = BuiltInFunction(self.name)
+        copy.set_context(self.context)
+        copy.set_pos(self.pos_start, self.pos_end)
+        return copy    
+
+    def __repr__(self):
+        return f"<built-in function {self.name}>"
+
+    ######################################################
+
+    def execute_print(self, exec_ctx):
+        print(str(exec_ctx.symbol_table.get("value")))
+        return RTResult().success(Number.null)
+    execute_print.arg_names = ["value"]
+
+    def execute_input(self, exec_ctx):
+        text = input()
+        return RTResult().success(String(text))
+    execute_input.arg_names = []
+
+    def execute_append(self, exec_ctx):
+        list_ = exec_ctx.symbol_table.get("list")
+        value = exec_ctx.symbol_table.get("value")
+        if not isinstance(list_, List):
+            return RTResult().failure(RTError(
+                list_.pos_start, list_.pos_end,
+                f"Expected List type, instead got {type(value).__name__} type",
+                self.context
+            ))
+            
+        list_.value.append(value)
+        return RTResult().success(Number.null)
+    execute_append.arg_names = ["list", "value"]
+
+    def execute_extend(self, exec_ctx):
+        list_a = exec_ctx.symbol_table.get("list_a")
+        list_b = exec_ctx.symbol_table.get("list_b")
+
+        if not isinstance(list_a, List):
+            return RTResult().failure(RTError(
+                list_a.pos_start, list_a.pos_end,
+                f"Expected List type, instead got {type(list_a).__name__} type",
+                self.context
+            ))
+
+        if not isinstance(list_b, List):
+            return RTResult().failure(RTError(
+                list_b.pos_start, list_b.pos_end,
+                f"Expected List type, instead got {type(list_b).__name__} type",
+                self.context
+            ))
+
+        list_a.value.extend(list_b.value)
+        return RTResult().success(Number.null)
+    execute_extend.arg_names = ['list_a', 'list_b']
+
+    def execute_is_string(self,exec_ctx):
+        iss = isinstance(exec_ctx.symbol_table.get("value"), String)
+        return RTResult().success(Boolean("true" if iss else "false"))
+    execute_is_string.arg_names = ["value"]
+
+    def execute_is_bool(self,exec_ctx):
+        iss = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
+        return RTResult().success(Boolean("true" if iss else "false"))
+    execute_is_bool.arg_names = ["value"]
+
+    def execute_is_number(self,exec_ctx):
+        iss = isinstance(exec_ctx.symbol_table.get("value"), Number)
+        return RTResult().success(Boolean("true" if iss else "false"))
+    execute_is_number.arg_names = ["value"]
+
+    def execute_is_float(self,exec_ctx):
+        value = exec_ctx.symbol_table.get("value")
+        if isinstance(exec_ctx.symbol_table.get("value"), Number):
+            if "." in str(value.value):
+                return RTResult().success(Boolean("true"))
+        return RTResult().success(Boolean("false"))
+    execute_is_float.arg_names = ["value"]
+
+    def execute_is_int(self,exec_ctx):
+        value = exec_ctx.symbol_table.get("value")
+        if isinstance(exec_ctx.symbol_table.get("value"), Number):
+            if "." not in str(value.value):
+                return RTResult().success(Boolean("true"))
+        return RTResult().success(Boolean("false"))
+    execute_is_int.arg_names = ["value"]
+
+    def execute_is_list(self,exec_ctx):
+        iss = isinstance(exec_ctx.symbol_table.get("value"), List)
+        return RTResult().success(Boolean("true" if iss else "false"))
+    execute_is_list.arg_names = ["value"]
+
+    def execute_is_func(self,exec_ctx):
+        iss = isinstance(exec_ctx.symbol_table.get("value"), BaseFunction)
+        return RTResult().success(Boolean("true" if iss else "false"))
+    execute_is_func.arg_names = ["value"]
+
+    def execute_clear(self, exec_ctx):
+        os.system('cls' if os.name == 'nt' else 'clear') 
+        return RTResult().success(String(""))
+    execute_clear.arg_names = []
 
 class RTResult:
     def __init__(self):
@@ -479,9 +615,14 @@ class Interpreter:
             List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
-    def visit_NumberNode(self, node, context):
+    def visit_FloatNode(self, node, context):
         return RTResult().success(
-            Number(node.node.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+            Float(node.node.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+
+    def visit_IntNode(self, node, context):
+        return RTResult().success(
+            Int(node.node.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
     def visit_BooleanNode(self, node, context):
@@ -540,7 +681,7 @@ class Interpreter:
                 context
             ))
 
-        value = value.copy().set_pos(node.pos_start, node.pos_end)
+        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
 
     def visit_VarAssignNode(self, node, context):

@@ -154,10 +154,15 @@ class Parser:
         res = ParseResult()
         tok = self.current_tok
 
-        if tok.type in (TokenTypes.FLOAT, TokenTypes.INT):
+        if tok.type == TokenTypes.FLOAT:
             res.register_advancement()
             self.advance()
-            return res.success(NumberNode(tok))
+            return res.success(FloatNode(tok))
+
+        if tok.type == TokenTypes.INT:
+            res.register_advancement()
+            self.advance()
+            return res.success(IntNode(tok))
 
         elif tok.type == TokenTypes.STRING:
             res.register_advancement()

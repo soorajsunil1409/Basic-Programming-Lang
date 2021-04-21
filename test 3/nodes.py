@@ -1,4 +1,14 @@
-class NumberNode:
+class FloatNode:
+    def __init__(self, node):
+        self.node = node
+
+        self.pos_start = node.pos_start
+        self.pos_end = node.pos_end
+
+    def __repr__(self):
+        return f"{self.node}"
+        
+class IntNode:
     def __init__(self, node):
         self.node = node
 
